@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCMACallTransfer", "UCMACallTransfer.csproj", "{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
