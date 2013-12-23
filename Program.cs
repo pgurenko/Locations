@@ -1,12 +1,23 @@
-﻿// .NET namespaces
+﻿/*
+ *
+ * Application uses UCMA 3.0 API to handle incoming user calls and 
+ * place them into "rooms" with sound playing
+ * 
+ * You need to set up the trusted application with <ApplicationID> first
+ * to try it out
+ * 
+ * Made by Pavel Gurenko (http://pavelgurenko.com)
+ *
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Net;
 using System.Net.Mime;
 using System.Threading;
 
-// UCMA namespaces
 using Microsoft.Rtc.Collaboration;
 using Microsoft.Rtc.Collaboration.ConferenceManagement;
 using Microsoft.Rtc.Collaboration.AudioVideo;
@@ -22,6 +33,8 @@ namespace UCMACallTransfer
         static CollaborationPlatform _collabPlatform;
         static ApplicationEndpoint _appEndpoint;
         static LocalEndpoint _currentEndpoint;
+        static List<UserCall> _userCalls;
+        static List<MusicRoom> _musicRooms;
         #endregion
 
         #region Methods
@@ -30,7 +43,7 @@ namespace UCMACallTransfer
         {
             try
             {
-                string appId = System.Configuration.ConfigurationManager.AppSettings["ApplicationID"];
+                string appId = ConfigurationManager.AppSettings["ApplicationID"];
 
                 Console.WriteLine("Creating CollaborationPlatform for the provisioned application with "
                     + "ID \'{0}\' using ProvisionedApplicationPlatformSettings.", appId);
@@ -69,7 +82,26 @@ namespace UCMACallTransfer
                 ShutdownPlatform();
             }
         }
-        
+
+        // Method to shutdown the CollaborationPlatform.
+        static void ShutdownPlatform()
+        {
+            _collabPlatform.BeginShutdown(ar =>
+            {
+                CollaborationPlatform collabPlatform = ar.AsyncState as CollaborationPlatform;
+                try
+                {
+                    collabPlatform.EndShutdown(ar);
+                    Console.WriteLine("The platform is now shut down.");
+                }
+                catch (RealTimeException realTimeEx)
+                {
+                    Console.WriteLine("RealTimeException: " + realTimeEx.ToString());
+                }
+            },
+            _collabPlatform);
+        }
+
         // Registered event handler for the ApplicationEndpointOwnerDiscovered event on the
         // CollaborationPlatform for the provisioned application.
         static void Platform_ApplicationEndpointOwnerDiscovered(object sender,
@@ -169,10 +201,19 @@ namespace UCMACallTransfer
         static void EndEndpointEstablish(IAsyncResult ar)
         {
             LocalEndpoint currentEndpoint = ar.AsyncState as LocalEndpoint;
-            _currentEndpoint = currentEndpoint;
             try
             {
                 currentEndpoint.EndEstablish(ar);
+
+                _currentEndpoint = currentEndpoint;
+
+                // Here, we have the endpoint fully established
+                // So let's get started
+                _currentEndpoint.RegisterForIncomingCall<AudioVideoCall>(IncomingAVCallReceived);
+
+                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["AirportRoomMusic"]));
+                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["BusRoomMusic"]));
+                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["OutdoorRoomMusic"]));
             }
             catch (ConnectionFailureException connFailEx)
             {
@@ -188,24 +229,28 @@ namespace UCMACallTransfer
             }
         }
 
-        // Method to shutdown the CollaborationPlatform.
-        static void ShutdownPlatform()
+        static void IncomingAVCallReceived(object sender, CallReceivedEventArgs<AudioVideoCall> e)
         {
-            _collabPlatform.BeginShutdown(ar =>
+            ApplicationEndpoint applicationEndpoint = (ApplicationEndpoint)sender;
+
+            bool callReplaced = false;
+            if (e.CallToBeReplaced != null)
             {
-                CollaborationPlatform collabPlatform = ar.AsyncState as CollaborationPlatform;
-                try
-                {
-                    collabPlatform.EndShutdown(ar);
-                    Console.WriteLine("The platform is now shut down.");
+                callReplaced = true;
+            }
+
+            Console.WriteLine("IncomingAVCallReceived for endpoint " + applicationEndpoint.OwnerUri +
+                " RemoteEndpointUri=" + e.Call.RemoteEndpoint.Uri +
+                " CallReplaced=" + callReplaced);
+
+            if (e.CallToBeReplaced != null)
+            {
+                foreach (UserCall userCall in _userCalls)
+                { 
                 }
-                catch (RealTimeException realTimeEx)
-                {
-                    Console.WriteLine("RealTimeException: " + realTimeEx.ToString());
-                }
-            },
-            _collabPlatform);
+            }
         }
+
         #endregion
     }
 }
