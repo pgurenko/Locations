@@ -4,7 +4,12 @@
  * place them into "rooms" with sound playing
  * 
  * You need to set up the trusted application with <ApplicationID> first
- * to try it out
+ * to try it out.
+ * 
+ * Sample configuration commands:
+ * New-CsTrustedApplication -ApplicationId locations -TrustedApplicationPoolFqdn apps.domain.com -Port 6005
+ * New-CsTrustedApplicationEndpoint -SipAddress "sip:locations@domain.com" -DisplayName "Locations" -TrustedApplicationPoolFqdn apps.domain.com -ApplicationId "locations"
+ * Enable-CsTopology
  * 
  * Made by Pavel Gurenko (http://pavelgurenko.com)
  *
@@ -25,7 +30,7 @@ using Microsoft.Rtc.Internal.Collaboration.Conferencing;
 using Microsoft.Rtc.Signaling;
 using Microsoft.Rtc.Collaboration.Presence;
 
-namespace UCMACallTransfer
+namespace Locations
 {
     public class Program
     {
@@ -34,7 +39,7 @@ namespace UCMACallTransfer
         static ApplicationEndpoint _appEndpoint;
         static LocalEndpoint _currentEndpoint;
         static List<UserCall> _userCalls;
-        static List<MusicRoom> _musicRooms;
+        static List<Location> _musicRooms;
         #endregion
 
         #region Methods
@@ -211,9 +216,9 @@ namespace UCMACallTransfer
                 // So let's get started
                 _currentEndpoint.RegisterForIncomingCall<AudioVideoCall>(IncomingAVCallReceived);
 
-                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["AirportRoomMusic"]));
-                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["BusRoomMusic"]));
-                _musicRooms.Add(new MusicRoom(ConfigurationManager.AppSettings["OutdoorRoomMusic"]));
+                _musicRooms.Add(new Location("Airport", ConfigurationManager.AppSettings["AirportRoomMusic"], _currentEndpoint));
+                //_musicRooms.Add(new Location("Bus", ConfigurationManager.AppSettings["BusRoomMusic"], _currentEndpoint));
+                //_musicRooms.Add(new Location("Outdoor", ConfigurationManager.AppSettings["OutdoorRoomMusic"], _currentEndpoint));
             }
             catch (ConnectionFailureException connFailEx)
             {

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCMACallTransfer", "UCMACallTransfer.csproj", "{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locations", "Locations.csproj", "{DBD55EE1-44AB-4E72-B075-FEABE8E9E6BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
