@@ -20,9 +20,12 @@ namespace Locations
         LocalEndpoint _Endpoint;
 
         Conference _conference;
+        Conversation _conversation;
         AudioVideoCall _avCall;
 
+        public string Name { get { return _Name; } }
         public Conference Conference { get { return _conference; } }
+        public Conversation Conversation { get { return _conversation; } }
         public int Id { get { return _id; } }
 
         void Log(string data)
@@ -66,22 +69,22 @@ namespace Locations
                             Subject = _Name
                         };
 
-                        Conversation conversation = new Conversation(_Endpoint, cs);
+                        _conversation = new Conversation(_Endpoint, cs);
 
                         ConferenceJoinOptions cjo = new ConferenceJoinOptions()
                         {
                             JoinMode = JoinMode.TrustedParticipant
                         };
 
-                        conversation.ConferenceSession.BeginJoin(_conference.ConferenceUri,
+                        _conversation.ConferenceSession.BeginJoin(_conference.ConferenceUri,
                             cjo,
                             ar1 =>
                             {
                                 try
                                 {
-                                    conversation.ConferenceSession.EndJoin(ar1);
+                                    _conversation.ConferenceSession.EndJoin(ar1);
 
-                                    _avCall = new AudioVideoCall(conversation);
+                                    _avCall = new AudioVideoCall(_conversation);
                                     _avCall.AudioVideoFlowConfigurationRequested +=
                                         new EventHandler<AudioVideoFlowConfigurationRequestedEventArgs>(_avCall_AudioVideoFlowConfigurationRequested);
 

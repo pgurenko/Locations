@@ -249,16 +249,20 @@ namespace Locations
                 " CallReplaced=" + callReplaced);
 
             if (!callReplaced)
-            { 
+            {
+                Console.WriteLine("Incoming call from " + e.RemoteParticipant.UserAtHost + " received");
+
                 // Incoming call. Placing it into the random location
                 Random rnd = new Random();
 
                 int index = rnd.Next(0, _locations.Count - 1);
-                if (index > 0)
-                { 
-                    // Place user to location
-                    _userCalls.Add(new UserCall(e.Call, _locations[index]));
-                }
+
+                Console.WriteLine("Placing " + e.RemoteParticipant.UserAtHost + " to \"" + _locations[index].Name + "\"");
+
+                // Place user to location
+                UserCall userCall = new UserCall(e.RemoteParticipant.UserAtHost, e.Call, _locations[index]);
+                userCall.Terminated += new EventHandler(userCall_Terminated);
+                _userCalls.Add(userCall);
             }
             else
             {
@@ -275,12 +279,22 @@ namespace Locations
                             newLocationId = 0;
                         }
 
-                        userCall.JoinLocation(_locations[newLocationId]);
+                        userCall.JoinLocation(e.CallToBeReplaced, _locations[newLocationId]);
 
                         break;
                     }
                 }
             }
+        }
+
+        static void userCall_Terminated(object sender, EventArgs e)
+        {
+            UserCall userCall = (UserCall)sender;
+            
+            Console.WriteLine(userCall.Uri + " disconnected");
+         
+            // Don't leak calls
+            _userCalls.Remove(userCall);
         }
 
         #endregion
