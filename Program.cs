@@ -262,6 +262,9 @@ namespace Locations
                 // Place user to location
                 UserCall userCall = new UserCall(e.RemoteParticipant.UserAtHost, e.Call, _locations[index]);
                 userCall.Terminated += new EventHandler(userCall_Terminated);
+                
+                e.Call.ApplicationContext = userCall;
+
                 _userCalls.Add(userCall);
             }
             else
@@ -279,7 +282,7 @@ namespace Locations
                             newLocationId = 0;
                         }
 
-                        userCall.JoinLocation(e.CallToBeReplaced, _locations[newLocationId]);
+                        userCall.JoinLocation(e.Call, _locations[newLocationId]);
 
                         break;
                     }
