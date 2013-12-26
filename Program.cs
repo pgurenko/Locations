@@ -38,8 +38,8 @@ namespace Locations
         static CollaborationPlatform _collabPlatform;
         static ApplicationEndpoint _appEndpoint;
         static LocalEndpoint _currentEndpoint;
-        static List<UserCall> _userCalls;
-        static List<Location> _musicRooms;
+        static List<UserCall> _userCalls = new List<UserCall>();
+        static List<Location> _locations = new List<Location>();
         #endregion
 
         #region Methods
@@ -216,9 +216,9 @@ namespace Locations
                 // So let's get started
                 _currentEndpoint.RegisterForIncomingCall<AudioVideoCall>(IncomingAVCallReceived);
 
-                _musicRooms.Add(new Location("Airport", ConfigurationManager.AppSettings["AirportRoomMusic"], _currentEndpoint));
-                //_musicRooms.Add(new Location("Bus", ConfigurationManager.AppSettings["BusRoomMusic"], _currentEndpoint));
-                //_musicRooms.Add(new Location("Outdoor", ConfigurationManager.AppSettings["OutdoorRoomMusic"], _currentEndpoint));
+                _locations.Add(new Location(0, "Airport", ConfigurationManager.AppSettings["AirportRoomMusic"], _currentEndpoint));
+                _locations.Add(new Location(1, "Bus", ConfigurationManager.AppSettings["BusRoomMusic"], _currentEndpoint));
+                _locations.Add(new Location(2, "Outdoor", ConfigurationManager.AppSettings["OutdoorRoomMusic"], _currentEndpoint));
             }
             catch (ConnectionFailureException connFailEx)
             {
@@ -248,10 +248,36 @@ namespace Locations
                 " RemoteEndpointUri=" + e.Call.RemoteEndpoint.Uri +
                 " CallReplaced=" + callReplaced);
 
-            if (e.CallToBeReplaced != null)
-            {
-                foreach (UserCall userCall in _userCalls)
+            if (!callReplaced)
+            { 
+                // Incoming call. Placing it into the random location
+                Random rnd = new Random();
+
+                int index = rnd.Next(0, _locations.Count - 1);
+                if (index > 0)
                 { 
+                    // Place user to location
+                    _userCalls.Add(new UserCall(e.Call, _locations[index]));
+                }
+            }
+            else
+            {
+                // Transfer user to the next location
+                foreach (UserCall userCall in _userCalls)
+                {
+                    if (e.CallToBeReplaced.ApplicationContext == userCall)
+                    {
+                        int newLocationId = userCall.Location.Id + 1;
+
+                        if (newLocationId >= _locations.Count)
+                        {
+                            newLocationId = 0;
+                        }
+
+                        userCall.JoinLocation(_locations[newLocationId]);
+
+                        break;
+                    }
                 }
             }
         }

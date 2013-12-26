@@ -14,6 +14,7 @@ namespace Locations
 {
     public class Location
     {
+        int _id;
         string _Name;
         string _FileName;
         LocalEndpoint _Endpoint;
@@ -21,16 +22,20 @@ namespace Locations
         Conference _conference;
         AudioVideoCall _avCall;
 
+        public Conference Conference { get { return _conference; } }
+        public int Id { get { return _id; } }
+
         void Log(string data)
         {
             Console.WriteLine("Location \"{0}\" {1}", _Name, data);
         }
 
-        public Location(string name, string fileName, LocalEndpoint endpoint)
+        public Location(int id, string name, string fileName, LocalEndpoint endpoint)
         {
             if (!File.Exists(fileName))
                 throw new FileNotFoundException(fileName);
 
+            _id = id;
             _Name = name;
             _FileName = fileName;
             _Endpoint = endpoint;
@@ -118,7 +123,7 @@ namespace Locations
 
         void _avCall_AudioVideoFlowConfigurationRequested(object sender, AudioVideoFlowConfigurationRequestedEventArgs e)
         {
-            Log("_avCall_AudioVideoFlowConfigurationRequested");
+            Log("AudioVideoFlowConfigurationRequested");
             e.Flow.StateChanged += new EventHandler<MediaFlowStateChangedEventArgs>(Flow_StateChanged);
         }
 
@@ -131,6 +136,7 @@ namespace Locations
             if (avFlow.State == MediaFlowState.Active)
             {
                 Player player = new Player();
+                player.StateChanged += new EventHandler<PlayerStateChangedEventArgs>(player_StateChanged);
                 player.AttachFlow(avFlow);
 
                 WmaFileSource src = new WmaFileSource(_FileName);
@@ -140,8 +146,11 @@ namespace Locations
                         try
                         {
                             src.EndPrepareSource(ar);
+
                             player.SetSource(src);
-                            player.SetMode(PlayerMode.Automatic);
+
+                            // For some reason, PlayerMode.Automatic does not loop audio
+                            player.SetMode(PlayerMode.Manual);
                             player.Start();
 
                             Log("Playing \"" + _FileName + "\"");
@@ -160,6 +169,18 @@ namespace Locations
                     avFlow.Player.DetachFlow(avFlow);
                 }
             }           
+        }
+
+        void player_StateChanged(object sender, PlayerStateChangedEventArgs e)
+        {
+            Log("Player StateChanged PreviousState=" + e.PreviousState + " State=" + e.State + " TransitionReason=" + e.TransitionReason);
+            
+            if (e.PreviousState == PlayerState.Started && e.State == PlayerState.Stopped)
+            {
+                Player player = (Player)sender;
+
+                player.Start();
+            }
         }
     }
 }
