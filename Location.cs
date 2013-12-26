@@ -166,6 +166,11 @@ namespace Locations
             {
                 if (avFlow.Player != null)
                 {
+                    if (avFlow.Player.Source != null)
+                    {
+                        avFlow.Player.Source.Close();
+                    }
+
                     avFlow.Player.DetachFlow(avFlow);
                 }
             }           
@@ -179,7 +184,7 @@ namespace Locations
             {
                 Player player = (Player)sender;
 
-                player.Start();
+                player.Start();               
             }
         }
     }

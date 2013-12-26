@@ -263,6 +263,7 @@ namespace Locations
             else
             {
                 // Transfer user to the next location
+                // We are getting here after BeginTransfer was called
                 foreach (UserCall userCall in _userCalls)
                 {
                     if (e.CallToBeReplaced.ApplicationContext == userCall)
