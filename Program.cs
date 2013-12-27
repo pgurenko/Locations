@@ -261,6 +261,7 @@ namespace Locations
 
                 // Place user to location
                 UserCall userCall = new UserCall(e.RemoteParticipant.UserAtHost, e.Call, _locations[index]);
+                
                 userCall.Terminated += new EventHandler(userCall_Terminated);
                 
                 e.Call.ApplicationContext = userCall;
@@ -275,12 +276,25 @@ namespace Locations
                 {
                     if (e.CallToBeReplaced.ApplicationContext == userCall)
                     {
-                        int newLocationId = userCall.Location.Id + 1;
-
-                        if (newLocationId >= _locations.Count)
+                        int newLocationId = 0;
+                        if (userCall.TransferPath == UserCallTransferPath.Next)
                         {
-                            newLocationId = 0;
+                            newLocationId = userCall.Location.Id + 1;
+                            if (newLocationId >= _locations.Count)
+                            {
+                                newLocationId = 0;
+                            }
                         }
+                        else if (userCall.TransferPath == UserCallTransferPath.Previous)
+                        {
+                            newLocationId = userCall.Location.Id - 1;
+                            if (newLocationId < 0)
+                            {
+                                newLocationId = _locations.Count - 1;
+                            }
+                        }
+
+                        e.Call.ApplicationContext = userCall;
 
                         userCall.JoinLocation(e.Call, _locations[newLocationId]);
 
@@ -295,9 +309,6 @@ namespace Locations
             UserCall userCall = (UserCall)sender;
             
             Console.WriteLine(userCall.Uri + " disconnected");
-         
-            // Don't leak calls
-            _userCalls.Remove(userCall);
         }
 
         #endregion

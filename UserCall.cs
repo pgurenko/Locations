@@ -15,6 +15,12 @@ using Microsoft.Speech.AudioFormat;
 
 namespace Locations
 {
+    public enum UserCallTransferPath
+    {
+        Previous,
+        Next
+    }
+
     public class UserCall
     {
         string _uri;
@@ -22,9 +28,11 @@ namespace Locations
         BackToBackCall _b2bCall;
         AudioVideoCall _controlAVCall;
         SpeechRecognitionEngine _speechRecognitionEngine;
+        UserCallTransferPath _userCallTransferPath = UserCallTransferPath.Next;
 
         public string Uri { get { return _uri; } }
         public Location Location { get { return _location; } }
+        public UserCallTransferPath TransferPath { get { return _userCallTransferPath; } }
         
         public event EventHandler Terminated;
 
@@ -140,8 +148,6 @@ namespace Locations
                                 try
                                 {
                                     _controlAVCall.AudioVideoMcuRouting.EndUpdateAudioRoutes(ar2);
-
-                                    //_controlAVCall.Flow
                                 }
                                 catch (Exception ex)
                                 {
@@ -181,14 +187,8 @@ namespace Locations
                 _speechRecognitionEngine.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(_speechRecognitionEngine_SpeechRecognized);
                 _speechRecognitionEngine.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(_speechRecognitionEngine_LoadGrammarCompleted);
 
-                Choices choices = new Choices();
-                GrammarBuilder gb = new GrammarBuilder();
-
-                SemanticResultValue temp = new SemanticResultValue("next", 0);
-                choices.Add(temp);
-                gb.Append(temp);
-
-                Grammar gr = new Grammar(gb);
+                Choices pathChoice = new Choices(new string[] { "previous", "next" });
+                Grammar gr = new Grammar(new GrammarBuilder(pathChoice));
                 _speechRecognitionEngine.LoadGrammarAsync(gr);
 
                 SpeechAudioFormatInfo speechAudioFormatInfo = new SpeechAudioFormatInfo(8000, AudioBitsPerSample.Sixteen, Microsoft.Speech.AudioFormat.AudioChannel.Mono);
@@ -217,22 +217,28 @@ namespace Locations
 
             if (e.Result.Text == "next")
             {
-                // Performing a self-transfer. After receiving this call, code will change the location to the next one
-                AudioVideoCall avCall = (AudioVideoCall)_b2bCall.Call1;
-                avCall.BeginTransfer(avCall,
-                    ar =>
-                    {
-                        try
-                        {
-                            avCall.EndTransfer(ar);
-                        }
-                        catch (Exception ex)
-                        {
-                            Log(ex.ToString());
-                        }
-                    },
-                    null);
+                _userCallTransferPath = UserCallTransferPath.Next;
             }
+            else if (e.Result.Text == "previous")
+            {
+                _userCallTransferPath = UserCallTransferPath.Previous;
+            }
+
+            // Performing a self-transfer
+            AudioVideoCall avCall = (AudioVideoCall)_b2bCall.Call1;
+            avCall.BeginTransfer(avCall,
+                ar =>
+                {
+                    try
+                    {
+                        avCall.EndTransfer(ar);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log(ex.ToString());
+                    }
+                },
+                null);
         }
     }
 }
